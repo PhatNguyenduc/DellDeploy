@@ -1,0 +1,20 @@
+# === Cấu hình tài khoản mặc định lúc xuất xưởng (lấy từ tag giấy của hãng) ===
+# Lưu ý: Với dòng máy mới, mỗi server có một mật khẩu mặc định riêng trên tag giấy.
+# Bạn nên định nghĩa `idrac_default_pwd` riêng cho từng host trong file `inventory/hosts.ini` (hoặc `host_vars/`).
+# Giá trị khai báo dưới đây chỉ dùng làm giá trị mặc định / fallback (ví dụ: máy cũ dùng "calvin").
+idrac_default_user: "root"
+idrac_default_pwd: "calvin"
+
+# === Tài khoản quản trị chung sau khi cấu hình (dùng cho các playbook) ===
+idrac_user: "svt-admin"
+idrac_password: "Admin@123"
+
+# === Thông tin kết nối OpenManage Enterprise (OME) ===
+ome_hostname: "10.4.114.34"
+ome_user: "admin"
+ome_pwd: "#Admin@123"
+
+# === Cấu hình Repo Nginx và OS Image ===
+control_node_ip: "10.4.114.40"
+iso_filename: "custom-ubuntu-autoinstall.iso"
+iso_url: "http://{{ control_node_ip }}/r660/{{ iso_filename }}"

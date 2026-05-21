@@ -1,0 +1,30 @@
+---
+- name: Khởi tạo tài khoản Quản trị viên mới cho iDRAC
+  hosts: dell_servers
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Tạo người dùng quản trị mới
+      dellemc.openmanage.idrac_user:
+        idrac_ip: "{{ idrac_ip }}"
+        idrac_user: "{{ idrac_default_user }}"      # Đọc từ group_vars/all.yml (mặc định: root)
+        idrac_password: "{{ idrac_default_pwd }}"  # Đọc từ group_vars/all.yml (mật khẩu tag giấy)
+        validate_certs: false
+        
+        state: present
+        user_name: "{{ idrac_user }}"               # Tên user mới (mặc định: svt-admin)
+        user_password: "{{ idrac_password }}"       # Mật khẩu mới (mặc định: Admin@123)
+        privilege: Administrator
+        ipmi_lan_privilege: Administrator
+        ipmi_serial_privilege: Administrator
+        enable: true
+        sol_enable: true
+        protocol_enable: true
+        authentication_protocol: SHA
+        privacy_protocol: AES
+      register: create_user_result
+
+    - name: Hiển thị kết quả tạo người dùng
+      debug:
+        var: create_user_result

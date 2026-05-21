@@ -1,0 +1,76 @@
+---
+- name: Triển khai HĐH Ubuntu ISO qua HTTP bằng Redfish API
+  hosts: dell_servers
+  connection: local
+  gather_facts: no
+
+# ==============================================================================
+# LƯU Ý KHI CHẠY PLAYBOOK NÀY:
+# 1. Đảm bảo file ISO Ubuntu (custom-ubuntu-autoinstall.iso) đã được đặt đúng 
+#    đường dẫn trên Web Server Nginx (Control Node IP: 10.4.114.40) tại:
+#    /var/www/html/r660/custom-ubuntu-autoinstall.iso (hoặc root folder tương ứng).
+# 2. Bạn có thể thay đổi các giá trị cấu hình này trong file 'group_vars/all.yml'.
+# ==============================================================================
+
+  tasks:
+
+    - name: Bước 0 - Mở khóa ổ đĩa ảo (Nhả đĩa cũ nếu đang bị kẹt)
+      ansible.builtin.uri:
+        url: "https://{{ idrac_ip }}/redfish/v1/Managers/iDRAC.Embedded.1/VirtualMedia/CD/Actions/VirtualMedia.EjectMedia"
+        method: POST
+        user: "{{ idrac_user }}"             # Lấy từ group_vars/all.yml
+        password: "{{ idrac_password }}"     # Lấy từ group_vars/all.yml
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+        body: {}
+        status_code: [200, 204, 400]
+      ignore_errors: true
+
+    - name: Bước 1 - Cắm đĩa ISO từ Nginx vào Virtual Media
+      ansible.builtin.uri:
+        url: "https://{{ idrac_ip }}/redfish/v1/Managers/iDRAC.Embedded.1/VirtualMedia/CD/Actions/VirtualMedia.InsertMedia"
+        method: POST
+        user: "{{ idrac_user }}"
+        password: "{{ idrac_password }}"
+        force_basic_auth: yes
+        timeout: 300
+        validate_certs: false
+        body_format: json
+        body:
+          Image: "{{ iso_url }}"             # Lấy từ group_vars/all.yml
+          Inserted: true
+        status_code: [200, 204]
+
+    - name: Bước 2 - Đặt cấu hình ưu tiên Boot vào đĩa CD (One-Time Boot)
+      ansible.builtin.uri:
+        url: "https://{{ idrac_ip }}/redfish/v1/Systems/System.Embedded.1"
+        method: PATCH
+        user: "{{ idrac_user }}"
+        password: "{{ idrac_password }}"
+        force_basic_auth: yes
+        validate_certs: false
+        body_format: json
+        body:
+          Boot:
+            BootSourceOverrideTarget: "Cd"
+            BootSourceOverrideEnabled: "Once"
+        status_code: [200, 204]
+
+    - name: Bước 3 - Reboot ngay lập tức để nạp HĐH
+      ansible.builtin.uri:
+        url: "https://{{ idrac_ip }}/redfish/v1/Systems/System.Embedded.1/Actions/ComputerSystem.Reset"
+        method: POST
+        user: "{{ idrac_user }}"
+        password: "{{ idrac_password }}"
+        force_basic_auth: yes
+        timeout: 120
+        validate_certs: false
+        body_format: json
+        body:
+          ResetType: "ForceRestart"
+        status_code: [200, 204]
+
+    - name: Hiển thị thông báo
+      ansible.builtin.debug:
+        msg: "Yêu cầu cài đặt thành công cho node {{ inventory_hostname }}! iDRAC đang Reboot và sẽ kéo ISO từ: {{ iso_url }}."

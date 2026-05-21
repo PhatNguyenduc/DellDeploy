@@ -1,0 +1,55 @@
+---
+- name: Tự động hóa cập nhật Firmware qua OME từ Local HTTP Server
+  hosts: localhost
+  gather_facts: no
+  connection: local
+
+  vars:
+    catalog_name: "Local_Python_HTTP_Catalog"
+    baseline_name: "Local_R760_Firmware_Baseline"
+
+  tasks:
+    - name: Bước 1 - Khởi tạo Catalog từ Python HTTP Server
+      dellemc.openmanage.ome_firmware_catalog:
+        hostname: "{{ ome_hostname }}"        # Đọc từ group_vars/all.yml
+        username: "{{ ome_user }}"            # Đọc từ group_vars/all.yml
+        password: "{{ ome_pwd }}"             # Đọc từ group_vars/all.yml
+        validate_certs: false
+        catalog_name: "{{ catalog_name }}"
+        repository_type: "HTTP"
+        source: "{{ control_node_ip }}"        # IP của server Nginx/Python HTTP (Đọc từ all.yml)
+        source_path: ""
+        file_name: "r660_upfirm_Catalog.xml"   # Tên file Catalog phải khớp 100%
+        check_certificate: false
+        state: present
+      register: catalog_result
+
+    - name: Bước 2 - Khởi tạo (hoặc cập nhật) Firmware Baseline
+      dellemc.openmanage.ome_firmware_baseline:
+        hostname: "{{ ome_hostname }}"
+        username: "{{ ome_user }}"
+        password: "{{ ome_pwd }}"
+        validate_certs: false
+        baseline_name: "{{ baseline_name }}"
+        catalog_name: "{{ catalog_name }}"
+        # Mặc định OME sẽ áp dụng Baseline cho nhóm "All Devices"
+        # Đổi thành tên Group cụ thể trên OME nếu chỉ muốn cập nhật cho 1 nhóm máy chủ test.
+        device_group_names:
+          - "All Devices"
+      register: baseline_result
+
+    - name: Bước 3 - Ra lệnh OME thực thi cập nhật Firmware NGAY LẬP TỨC
+      dellemc.openmanage.ome_firmware:
+        hostname: "{{ ome_hostname }}"
+        username: "{{ ome_user }}"
+        password: "{{ ome_pwd }}"
+        validate_certs: false
+        baseline_name: "{{ baseline_name }}"
+        schedule: "RebootNow" # Tự động Reboot máy chủ ngay lập tức sau khi nạp firmware để áp dụng bản cập nhật
+      register: update_result
+
+    - name: Hiển thị kết quả của tiến trình cập nhật
+      debug:
+        msg:
+          - "Đã kích hoạt tiến trình cập nhật qua OME thành công!"
+          - "Chi tiết Job: {{ update_result }}"

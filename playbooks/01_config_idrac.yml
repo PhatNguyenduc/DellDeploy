@@ -1,0 +1,30 @@
+---
+- name: Cấu hình IP tĩnh và Hostname cho iDRAC
+  hosts: dell_servers
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Thiết lập Network Attributes và Hostname cho {{ inventory_hostname }}
+      dellemc.openmanage.idrac_attributes:
+        idrac_ip: "{{ idrac_ip }}"         # IP hiện tại để Ansible kết nối vào
+        idrac_user: "{{ idrac_user }}"     # Lấy từ group_vars/all.yml
+        idrac_password: "{{ idrac_password }}" # Lấy từ group_vars/all.yml
+        validate_certs: false
+        
+        idrac_attributes:
+          NIC.1.DNSRacName: "{{ new_hostname }}"
+          IPv4.1.Enable: "Enabled"
+          IPv4.1.DHCPEnable: "Disabled"
+          IPv4Static.1.Address: "{{ new_idrac_ip }}"
+          IPv4Static.1.Netmask: "{{ netmask }}"
+          IPv4Static.1.Gateway: "{{ gateway }}"
+      register: config_result
+      ignore_errors: true # Cho phép qua lỗi khi iDRAC đổi IP làm mất kết nối mạng với Ansible
+
+    - name: Hiển thị kết quả cấu hình (Hoặc thông báo về việc đổi IP)
+      debug:
+        msg:
+          - "Kết quả cấu hình: {{ config_result }}"
+          - "LƯU Ý: Nếu bạn thay đổi IP của iDRAC thành IP mới, kết nối hiện tại sẽ bị ngắt và playbook sẽ tiếp tục chạy (ignore_errors)."
+          - "Hãy cập nhật lại IP mới vào file 'inventory/hosts.ini' trước khi chạy các bước cấu hình RAID hoặc cài đặt OS tiếp theo!"

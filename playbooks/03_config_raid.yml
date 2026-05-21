@@ -1,0 +1,41 @@
+---
+- name: Cấu hình RAID 1 cho ổ đĩa OS
+  hosts: dell_servers
+  connection: local
+  gather_facts: false
+
+  vars:
+    # Các thông số RAID mặc định cho Server Dell R660/R760. 
+    # Nếu máy chủ khác có cấu hình phần cứng khác, hãy định nghĩa đè các biến này ở file inventory/hosts.ini
+    # (Ví dụ: dell_node1 idrac_ip=10.1.32.96 target_controller="RAID.Integrated.1-1" ...)
+    target_controller: "{{ target_controller | default('RAID.SL.3-1') }}"
+    target_drive_0: "{{ target_drive_0 | default('Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.3-1') }}"
+    target_drive_1: "{{ target_drive_1 | default('Disk.Bay.1:Enclosure.Internal.0-1:RAID.SL.3-1') }}"
+
+  tasks:
+    - name: Tạo ổ đĩa RAID 1 cho máy chủ {{ inventory_hostname }}
+      dellemc.openmanage.dellemc_idrac_storage_volume:
+        idrac_ip: "{{ idrac_ip }}"             # Lấy từ hosts.ini (IP hiện tại đang hoạt động)
+        idrac_user: "{{ idrac_user }}"         # Lấy từ group_vars/all.yml
+        idrac_password: "{{ idrac_password }}" # Lấy từ group_vars/all.yml
+        validate_certs: false
+        state: create
+        
+        controller_id: "{{ target_controller }}"
+        volume_type: "RAID 1"
+        span_depth: 1
+        span_length: 2
+        number_dedicated_hot_spare: 0
+        raid_init_operation: "Fast"
+        
+        volumes:
+          - name: "RAID1-OS"
+            drives:
+              id:
+                - "{{ target_drive_0 }}"
+                - "{{ target_drive_1 }}"
+      register: raid_status
+
+    - name: Hiển thị kết quả cấu hình RAID
+      debug:
+        var: raid_status
