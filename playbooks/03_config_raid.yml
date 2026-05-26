@@ -14,7 +14,7 @@
 
   tasks:
     - name: Tạo ổ đĩa RAID 1 cho máy chủ {{ inventory_hostname }}
-      dellemc.openmanage.dellemc_idrac_storage_volume:
+      dellemc.openmanage.idrac_storage_volume:
         idrac_ip: "{{ idrac_ip }}"             # Lấy từ hosts.ini (IP hiện tại đang hoạt động)
         idrac_user: "{{ idrac_user }}"         # Lấy từ group_vars/all.yml
         idrac_password: "{{ idrac_password }}" # Lấy từ group_vars/all.yml

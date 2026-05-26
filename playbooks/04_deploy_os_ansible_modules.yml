@@ -1,0 +1,61 @@
+---
+- name: Triển khai HĐH Ubuntu ISO qua HTTP bằng Ansible Modules (dellemc.openmanage)
+  hosts: dell_servers
+  connection: local
+  gather_facts: no
+
+# ==============================================================================
+# LƯU Ý KHI CHẠY PLAYBOOK NÀY:
+# 1. Playbook này sử dụng collection 'dellemc.openmanage'. 
+#    Cần cài đặt qua lệnh: ansible-galaxy collection install dellemc.openmanage
+# 2. Đảm bảo file ISO Ubuntu (custom-ubuntu-autoinstall.iso) đã được đặt đúng 
+#    đường dẫn trên Web Server Nginx (Control Node IP).
+# 3. Bạn có thể thay đổi các giá trị cấu hình này trong file 'group_vars/all.yml'.
+# ==============================================================================
+
+  tasks:
+
+    - name: Bước 0 - Mở khóa ổ đĩa ảo (Nhả đĩa cũ nếu đang bị kẹt)
+      dellemc.openmanage.idrac_virtual_media:
+        idrac_ip: "{{ idrac_ip }}"
+        idrac_user: "{{ idrac_user }}"
+        idrac_password: "{{ idrac_password }}"
+        validate_certs: false
+        virtual_media:
+          - index: 1
+            insert: false
+          - index: 2
+            insert: false
+      ignore_errors: true
+
+    - name: Bước 1 - Cắm đĩa ISO từ Nginx vào Virtual Media
+      dellemc.openmanage.idrac_virtual_media:
+        idrac_ip: "{{ idrac_ip }}"
+        idrac_user: "{{ idrac_user }}"
+        idrac_password: "{{ idrac_password }}"
+        validate_certs: false
+        virtual_media:
+          - index: 1
+            insert: true
+            image: "{{ iso_url }}"
+
+    - name: Bước 2 - Đặt cấu hình ưu tiên Boot vào đĩa CD (One-Time Boot)
+      dellemc.openmanage.idrac_boot:
+        idrac_ip: "{{ idrac_ip }}"
+        idrac_user: "{{ idrac_user }}"
+        idrac_password: "{{ idrac_password }}"
+        validate_certs: false
+        boot_source_override_target: "cd"
+        boot_source_override_enabled: "once"
+
+    - name: Bước 3 - Reboot ngay lập tức để nạp HĐH
+      dellemc.openmanage.redfish_powerstate:
+        baseuri: "{{ idrac_ip }}"
+        username: "{{ idrac_user }}"
+        password: "{{ idrac_password }}"
+        validate_certs: false
+        reset_type: "ForceRestart"
+
+    - name: Hiển thị thông báo
+      ansible.builtin.debug:
+        msg: "Yêu cầu cài đặt thành công cho node {{ inventory_hostname }}! iDRAC đang Reboot và sẽ kéo ISO từ: {{ iso_url }}."

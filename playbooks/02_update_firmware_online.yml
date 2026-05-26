@@ -1,0 +1,56 @@
+---
+- name: Tự động hóa cập nhật Firmware qua OME từ Dell Online Repository
+  hosts: localhost
+  gather_facts: no
+  connection: local
+
+  vars:
+    catalog_name: "Dell_Online_Catalog"
+    baseline_name: "Dell_Online_Firmware_Baseline"
+
+  tasks:
+    - name: Bước 1 - Khởi tạo Catalog từ Dell Online Repository
+      dellemc.openmanage.ome_firmware_catalog:
+        hostname: "{{ ome_hostname }}"        # Đọc từ group_vars/all.yml
+        username: "{{ ome_user }}"            # Đọc từ group_vars/all.yml
+        password: "{{ ome_pwd }}"             # Đọc từ group_vars/all.yml
+        validate_certs: false
+        catalog_name: "{{ catalog_name }}"
+        catalog_description: "Catalog created from Dell Online Repo"
+        repository_type: "HTTPS"
+        source: "downloads.dell.com"
+        source_path: "catalog"
+        file_name: "catalog.gz"
+        check_certificate: false
+        state: present
+      register: catalog_result
+
+    - name: Bước 2 - Khởi tạo (hoặc cập nhật) Firmware Baseline
+      dellemc.openmanage.ome_firmware_baseline:
+        hostname: "{{ ome_hostname }}"
+        username: "{{ ome_user }}"
+        password: "{{ ome_pwd }}"
+        validate_certs: false
+        baseline_name: "{{ baseline_name }}"
+        catalog_name: "{{ catalog_name }}"
+        # Mặc định OME sẽ áp dụng Baseline cho nhóm "All Devices"
+        # Đổi thành tên Group cụ thể trên OME nếu chỉ muốn cập nhật cho 1 nhóm máy chủ test.
+        device_group_names:
+          - "All Devices"
+      register: baseline_result
+
+    - name: Bước 3 - Ra lệnh OME thực thi cập nhật Firmware NGAY LẬP TỨC
+      dellemc.openmanage.ome_firmware:
+        hostname: "{{ ome_hostname }}"
+        username: "{{ ome_user }}"
+        password: "{{ ome_pwd }}"
+        validate_certs: false
+        baseline_name: "{{ baseline_name }}"
+        schedule: "RebootNow" # Tự động Reboot máy chủ ngay lập tức sau khi nạp firmware để áp dụng bản cập nhật
+      register: update_result
+
+    - name: Hiển thị kết quả của tiến trình cập nhật
+      debug:
+        msg:
+          - "Đã kích hoạt tiến trình cập nhật qua OME (Dell Online) thành công!"
+          - "Chi tiết Job: {{ update_result }}"

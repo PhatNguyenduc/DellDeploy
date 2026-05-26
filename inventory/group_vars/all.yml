@@ -15,6 +15,6 @@ ome_user: "admin"
 ome_pwd: "#Admin@123"
 
 # === Cấu hình Repo Nginx và OS Image ===
-control_node_ip: "10.4.114.40"
-iso_filename: "custom-ubuntu-autoinstall.iso"
-iso_url: "http://{{ control_node_ip }}/r660/{{ iso_filename }}"
+control_node_ip: "10.4.114.35"
+iso_filename: "ubuntu-24.04.4-live-server-amd64.iso"
+iso_url: "http://{{ control_node_ip }}/iso/{{ iso_filename }}"

@@ -6,7 +6,7 @@
 
   vars:
     catalog_name: "Local_Python_HTTP_Catalog"
-    baseline_name: "Local_R760_Firmware_Baseline"
+    baseline_name: "Local_R660_Firmware_Baseline"
 
   tasks:
     - name: Bước 1 - Khởi tạo Catalog từ Python HTTP Server
@@ -18,8 +18,8 @@
         catalog_name: "{{ catalog_name }}"
         repository_type: "HTTP"
         source: "{{ control_node_ip }}"        # IP của server Nginx/Python HTTP (Đọc từ all.yml)
-        source_path: ""
-        file_name: "r660_upfirm_Catalog.xml"   # Tên file Catalog phải khớp 100%
+        source_path: "DRM/"
+        file_name: "Dell_R660_Repo_Catalog.xml"   # Tên file Catalog phải khớp 100%
         check_certificate: false
         state: present
       register: catalog_result
