@@ -24,8 +24,6 @@
         virtual_media:
           - index: 1
             insert: false
-          - index: 2
-            insert: false
       ignore_errors: true
 
     - name: Bước 1 - Cắm đĩa ISO từ Nginx vào Virtual Media
@@ -47,14 +45,6 @@
         validate_certs: false
         boot_source_override_target: "cd"
         boot_source_override_enabled: "once"
-
-    - name: Bước 3 - Reboot ngay lập tức để nạp HĐH
-      dellemc.openmanage.redfish_powerstate:
-        baseuri: "{{ idrac_ip }}"
-        username: "{{ idrac_user }}"
-        password: "{{ idrac_password }}"
-        validate_certs: false
-        reset_type: "ForceRestart"
 
     - name: Hiển thị thông báo
       ansible.builtin.debug:

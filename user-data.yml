@@ -1,0 +1,173 @@
+#cloud-config
+autoinstall:
+  version: 1
+  apt:
+    disable_components: []
+    fallback: offline-install
+    geoip: true
+    mirror-selection:
+      primary:
+      - country-mirror
+      - arches: &id001
+        - amd64
+        - i386
+        uri: http://archive.ubuntu.com/ubuntu/
+      - arches: &id002
+        - s390x
+        - arm64
+        - armhf
+        - powerpc
+        - ppc64el
+        - riscv64
+        uri: http://ports.ubuntu.com/ubuntu-ports
+    preserve_sources_list: false
+    security:
+    - arches: *id001
+      uri: http://security.ubuntu.com/ubuntu/
+    - arches: *id002
+      uri: http://ports.ubuntu.com/ubuntu-ports
+  codecs:
+    install: false
+  drivers:
+    install: false
+  kernel:
+    package: linux-generic
+  keyboard:
+    layout: us
+    toggle: null
+    variant: ''
+  locale: en_US.UTF-8
+  oem:
+    install: auto
+  source:
+    id: ubuntu-server
+    search_drivers: false
+  ssh:
+    allow-pw: true
+    authorized-keys: []
+    install-server: true
+  updates: security
+
+  identity:
+    hostname: nt1-kddi-compute
+    password: $6$ZeaNBlNlMKzenn33$lOGzHK1zbnH9n7L7j.jGACDpmgtpdaCXSenQs1lN1gNwHdRNDrJSvia5NfO10wr5CEAvPQlS4Of9dI.HVqs6l/
+    realname: vnptcloud
+    username: vnptcloud
+
+  network:
+    version: 2
+    ethernets:
+      eno12399np0: {}
+      eno12409np1: {}
+      enp160s0f0np0: {}
+      enp160s0f1np1: {}
+      enp55s0f0np0: {}
+      enp55s0f1np1: {}
+    bonds:
+      bond0:
+        interfaces:
+        - enp160s0f0np0
+        - enp55s0f0np0
+        parameters:
+          lacp-rate: fast
+          mode: 802.3ad
+          transmit-hash-policy: layer3+4
+      bond1:
+        interfaces:
+        - eno12399np0
+        - enp55s0f1np1
+        parameters:
+          lacp-rate: fast
+          mode: 802.3ad
+          transmit-hash-policy: layer3+4
+      bond2:
+        interfaces:
+        - eno12409np1
+        - enp160s0f1np1
+        parameters:
+          lacp-rate: fast
+          mode: 802.3ad
+          transmit-hash-policy: layer3+4
+
+  storage:
+    config:
+    - ptable: gpt
+      path: /dev/sda
+      wipe: superblock-recursive
+      preserve: false
+      name: ''
+      grub_device: false
+      id: disk-sda
+      type: disk
+    - device: disk-sda
+      size: 1127219200
+      wipe: superblock
+      flag: boot
+      number: 1
+      preserve: false
+      grub_device: true
+      offset: 1048576
+      path: /dev/sda1
+      id: partition-0
+      type: partition
+    - fstype: fat32
+      volume: partition-0
+      preserve: false
+      id: format-1
+      type: format
+    - device: disk-sda
+      size: 8589934592
+      wipe: superblock
+      flag: swap
+      number: 2
+      preserve: false
+      grub_device: false
+      offset: 1128267776
+      path: /dev/sda2
+      id: partition-2
+      type: partition
+    - fstype: swap
+      volume: partition-2
+      preserve: false
+      id: format-0
+      type: format
+    - path: ''
+      device: format-0
+      id: mount-2
+      type: mount
+    - device: disk-sda
+      size: 949937504256
+      wipe: superblock
+      number: 3
+      preserve: false
+      grub_device: false
+      offset: 9718202368
+      path: /dev/sda3
+      id: partition-3
+      type: partition
+    - fstype: ext4
+      volume: partition-3
+      preserve: false
+      id: format-3
+      type: format
+    - path: /
+      device: format-3
+      id: mount-3
+      type: mount
+    - path: /boot/efi
+      device: format-1
+      id: mount-0
+      type: mount
+  swap:
+    size: 0
+  user-data:  
+    runcmd:
+      - mkdir -p /mnt/cdrom
+      - mount /dev/sr0 /mnt/cdrom || true
+      - cp /mnt/cdrom/nocloud/ip_mapping.csv /opt/ip_mapping.csv
+      - cp /mnt/cdrom/nocloud/config_ip.sh /opt/config_ip.sh
+      - sed -i 's/\r$//' /opt/config_ip.sh
+      - chmod 755 /opt/config_ip.sh
+      - bash /opt/config_ip.sh
+      - rm -f /opt/ip_mapping.csv /opt/config_ip.sh
+      - umount /mnt/cdrom || true
