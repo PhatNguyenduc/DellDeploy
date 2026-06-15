@@ -7,22 +7,24 @@
   tasks:
     - name: Thiết lập các tham số BIOS và tự động tạo Job Reboot áp dụng ngay lập tức
       dellemc.openmanage.idrac_bios:
-        idrac_ip: "{{ idrac_ip }}"             # Đọc từ inventory/hosts.ini
-        idrac_user: "{{ idrac_user }}"         # Lấy từ group_vars/all.yml
+        idrac_ip: "{{ idrac_ip }}" # Đọc từ inventory/hosts.ini
+        idrac_user: "{{ idrac_user }}" # Lấy từ group_vars/all.yml
         idrac_password: "{{ idrac_password }}" # Lấy từ group_vars/all.yml
         validate_certs: false
-        
+
         # Thiết lập thời gian áp dụng cấu hình
-        apply_time: "Immediate"                # Tự động tạo Job áp dụng và reboot ngay lập tức
-        reset_type: "force_restart"            # Cưỡng bách reboot hệ thống (hoặc dùng graceful_restart nếu cần)
-        job_wait: true                         # Đợi cho tới khi Job tạo thành công trên iDRAC
-        job_wait_timeout: 1200                 # Thời gian tối đa chờ đợi (giây)
+        apply_time: "Immediate" # Tự động tạo Job áp dụng và reboot ngay lập tức
+        reset_type: "force_restart" # Cưỡng bách reboot hệ thống (hoặc dùng graceful_restart nếu cần)
+        job_wait: true # Đợi cho tới khi Job tạo thành công trên iDRAC
+        job_wait_timeout: 1200 # Thời gian tối đa chờ đợi (giây)
 
         # Các thuộc tính cấu hình BIOS cụ thể
         attributes:
           WorkloadProfile: "HpcProfile"
           SysProfile: "Performance"
           TpmSecurity: "Off"
+          ProcVirtualization: "Enabled"
+          LogicalProc: "Enabled"
       register: bios_config_result
 
     - name: Hiển thị trạng thái cấu hình BIOS
