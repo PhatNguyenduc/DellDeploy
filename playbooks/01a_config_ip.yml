@@ -1,0 +1,51 @@
+---
+- name: Cấu hình IP Tĩnh và Hostname tự động cho hàng loạt iDRAC qua File Mapping CSV
+  hosts: dell_servers
+  connection: local
+  gather_facts: false
+
+  vars:
+    # SỬA: Trỏ ra thư mục gốc của project DellDeploy một cách linh hoạt
+    mapping_file: "{{ playbook_dir }}/../ip_mapping.csv"
+
+  tasks:
+    - name: 1. Thu thập thông tin Service Tag phần cứng của Server
+      dellemc.openmanage.idrac_system_info:
+        idrac_ip: "{{ idrac_ip }}"
+        idrac_user: "{{ idrac_user }}"
+        idrac_password: "{{ idrac_password }}"
+        validate_certs: false
+      register: idrac_info
+
+    - name: 2. Ghi nhận và làm sạch chuỗi Service Tag
+      set_fact:
+        server_tag: "{{ idrac_info.system_info.System.ServiceTag | trim | upper }}"
+
+    - name: 3. Đọc dữ liệu file ip_mapping.csv
+      community.general.read_csv:
+        path: "{{ mapping_file }}"
+        key: Serial
+      register: csv_master
+      delegate_to: localhost
+
+    - name: 4. Thiết lập Network Attributes và Hostname chuẩn quy hoạch cho iDRAC
+      dellemc.openmanage.idrac_attributes:
+        idrac_ip: "{{ idrac_ip }}"
+        idrac_user: "{{ idrac_user }}"
+        idrac_password: "{{ idrac_password }}"
+        validate_certs: false
+
+        idrac_attributes:
+          NIC.1.DNSRacName: "{{ csv_master.dict[server_tag].hostname }}"
+          IPv4.1.Enable: "Enabled"
+          IPv4.1.DHCPEnable: "Disabled"
+          IPv4Static.1.Address: "{{ csv_master.dict[server_tag].OOB_IP }}"
+          IPv4Static.1.Netmask: "255.255.255.0"
+          IPv4Static.1.Gateway: "10.169.98.1"
+      when: server_tag in csv_master.dict
+      register: config_result
+      ignore_errors: true
+
+    - name: 5. Hiển thị thông báo trạng thái đổi IP
+      debug:
+        msg: "Server [{{ server_tag }}] -> IP Tĩnh mới: {{ csv_master.dict[server_tag].OOB_IP }}"
