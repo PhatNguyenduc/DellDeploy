@@ -11,15 +11,15 @@
   tasks:
     - name: Bước 1 - Khởi tạo Catalog từ Python HTTP Server
       dellemc.openmanage.ome_firmware_catalog:
-        hostname: "{{ ome_hostname }}"        # Đọc từ group_vars/all.yml
-        username: "{{ ome_user }}"            # Đọc từ group_vars/all.yml
-        password: "{{ ome_pwd }}"             # Đọc từ group_vars/all.yml
+        hostname: "{{ ome_hostname }}" # Đọc từ group_vars/all.yml
+        username: "{{ ome_user }}" # Đọc từ group_vars/all.yml
+        password: "{{ ome_pwd }}" # Đọc từ group_vars/all.yml
         validate_certs: false
         catalog_name: "{{ catalog_name }}"
         repository_type: "HTTP"
-        source: "{{ control_node_ip }}"        # IP của server Nginx/Python HTTP (Đọc từ all.yml)
+        source: "{{ control_node_ip }}" # IP của server Nginx/Python HTTP (Đọc từ all.yml)
         source_path: "DRM/"
-        file_name: "Dell_R660_Repo_Catalog.xml"   # Tên file Catalog phải khớp 100%
+        file_name: "DRM_15_6_Catalog.xml" # Tên file Catalog phải khớp 100%
         check_certificate: false
         state: present
       register: catalog_result

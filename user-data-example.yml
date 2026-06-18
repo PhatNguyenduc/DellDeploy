@@ -1,0 +1,144 @@
+#cloud-config
+autoinstall:
+  apt:
+    disable_components: []
+    fallback: offline-install
+    geoip: true
+    mirror-selection:
+      primary:
+      - country-mirror
+      - arches: &id001
+        - amd64
+        - i386
+        uri: http://archive.ubuntu.com/ubuntu/
+      - arches: &id002
+        - s390x
+        - arm64
+        - armhf
+        - powerpc
+        - ppc64el
+        - riscv64
+        uri: http://ports.ubuntu.com/ubuntu-ports
+    preserve_sources_list: false
+    security:
+    - arches: *id001
+      uri: http://security.ubuntu.com/ubuntu/
+    - arches: *id002
+      uri: http://ports.ubuntu.com/ubuntu-ports
+  codecs:
+    install: false
+  drivers:
+    install: false
+  identity:
+    hostname: yourhostname
+    password: $6$7TmSIk8dZ1aOSbT.$vMAGc.Jw7iUhPv1syfj1DNjSHmVZUm2/UzwsxJrzR9.vs8zJyhpA5K6F7VqE6k1QiJdlumrlxI6ob6digcDhw0
+    username: yourusername
+  kernel:
+    package: linux-generic
+  keyboard:
+    layout: us
+    toggle: null
+    variant: ''
+  locale: en_US.UTF-8
+  network:
+    network:
+      version: 2
+      ethernets:
+        # Nhận DHCP tạm thời lúc cài đặt hệ điều hành
+        enp160s0f0np0:
+          dhcp4: true
+  oem:
+    install: auto
+  source:
+    id: ubuntu-server
+    search_drivers: false
+  ssh:
+    allow-pw: true
+    authorized-keys: []
+    install-server: true
+
+  storage:
+    config:
+    - ptable: gpt
+      path: /dev/sda
+      wipe: superblock-recursive
+      preserve: false
+      name: ''
+      grub_device: false
+      id: disk-sda
+      type: disk
+      match:
+        path: /dev/sda
+    - device: disk-sda
+      size: 1073741824
+      wipe: superblock
+      flag: boot
+      number: 1
+      preserve: false
+      grub_device: true
+      id: partition-0
+      type: partition
+    - fstype: fat32
+      volume: partition-0
+      preserve: false
+      id: format-1
+      type: format
+    - device: disk-sda
+      size: 8589934592
+      wipe: superblock
+      flag: swap
+      number: 2
+      preserve: false
+      grub_device: false
+      id: partition-2
+      type: partition
+    - fstype: swap
+      volume: partition-2
+      preserve: false
+      id: format-0
+      type: format
+    - path: ''
+      device: format-0
+      id: mount-2
+      type: mount
+    - device: disk-sda
+      size: -1
+      wipe: superblock
+      number: 3
+      preserve: false
+      grub_device: false
+      id: partition-3
+      type: partition
+    - fstype: ext4
+      volume: partition-3
+      preserve: false
+      id: format-3
+      type: format
+    - path: /
+      device: format-3
+      id: mount-3
+      type: mount
+    - path: /boot/efi
+      device: format-1
+      id: mount-0
+      type: mount
+    swap:
+      size: 0
+  updates: security
+  version: 1
+
+ 
+  user-data:
+    runcmd:
+      - mkdir -p /mnt/cdrom
+      - mount /dev/disk/by-label/UBUNTU_AUTO /mnt/cdrom || mount /dev/sr0 /mnt/cdrom || true
+      - cp /mnt/cdrom/nocloud/ip_mapping.csv /opt/ip_mapping.csv
+      - cp /mnt/cdrom/nocloud/config_ip.sh /opt/config_ip.sh
+      - sed -i 's/\r$//' /opt/config_ip.sh
+      - chmod 755 /opt/config_ip.sh
+      - bash /opt/config_ip.sh
+      - rm -f /opt/ip_mapping.csv /opt/config_ip.sh
+      - umount /mnt/cdrom || true
+      - echo 'root:yourpassword' | chpasswd
+      - mkdir -p /etc/ssh/sshd_config.d
+      - echo "PermitRootLogin yes" > /etc/ssh/sshd_config.d/99-allow-root.conf

@@ -7,7 +7,7 @@
 # ==============================================================================
 # LƯU Ý KHI CHẠY PLAYBOOK NÀY:
 # 1. Đảm bảo file ISO Ubuntu (custom-ubuntu-autoinstall.iso) đã được đặt đúng 
-#    đường dẫn trên Web Server Nginx (Control Node IP: 10.4.114.40) tại:
+#    đường dẫn trên Web Server Nginx (Control Node IP) tại:
 #    /var/www/html/r660/custom-ubuntu-autoinstall.iso (hoặc root folder tương ứng).
 # 2. Bạn có thể thay đổi các giá trị cấu hình này trong file 'group_vars/all.yml'.
 # ==============================================================================
