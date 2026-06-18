@@ -1,3 +1,8 @@
+
+<img width="147" height="40" alt="image" src="https://github.com/user-attachments/assets/986e1cce-3a10-4b40-9bd9-00f8eebf0f36" />
+
+# CÔNG TY CỔ PHẦN PHÁT TRIỂN CÔNG NGHỆ VIỄN THÔNG TIN HỌC SUN VIỆT
+
 # Automation Note
 ## 1. Installation
 ### Install Ansible, Dell emc collection, OME.
