@@ -6,8 +6,6 @@
 
   vars:
     mapping_file: "{{ playbook_dir }}/../ip_mapping.csv"
-    ip_gateway: "10.169.15.1"
-    # ntlpublic: 10.169.15.1 , ntl4 và kddi: 10.169.14.1
 
   tasks:
     - name: 1. Thu thập thông tin Service Tag phần cứng của Server
@@ -20,7 +18,11 @@
 
     - name: 2. Ghi nhận và làm sạch chuỗi Service Tag
       set_fact:
-        server_tag: "{{ idrac_info.system_info.System.ServiceTag | trim | upper }}"
+        server_tag: "{{ idrac_info.system_info.System[0].ServiceTag | trim | upper }}"
+
+    - name: DEBUG - In Service Tag đọc từ iDRAC
+      debug:
+        msg: "ServiceTag từ iDRAC = [{{ server_tag }}]"
 
     - name: 3. Đọc dữ liệu file ip_mapping.csv
       community.general.read_csv:
@@ -28,6 +30,24 @@
         key: Serial
       register: csv_master
       delegate_to: localhost
+
+    - name: DEBUG - In tất cả Serial trong CSV
+      debug:
+        msg: "{{ csv_master.dict.keys() | list }}"
+
+    - name: DEBUG - Kiểm tra tag có tồn tại trong CSV không
+      debug:
+        msg: "Tag {{ server_tag }} tồn tại trong CSV: {{ server_tag in csv_master.dict }}"
+
+    - name: DEBUG - Hiển thị record tương ứng nếu tìm thấy
+      debug:
+        var: csv_master.dict[server_tag]
+      when: server_tag in csv_master.dict
+
+    - name: DEBUG - Báo lỗi nếu không tìm thấy tag
+      debug:
+        msg: "KHÔNG tìm thấy Service Tag {{ server_tag }} trong file CSV"
+      when: server_tag not in csv_master.dict
 
     - name: 4. Thiết lập Network Attributes và Hostname chuẩn quy hoạch cho iDRAC
       dellemc.openmanage.idrac_attributes:
@@ -42,11 +62,21 @@
           IPv4.1.DHCPEnable: "Disabled"
           IPv4Static.1.Address: "{{ csv_master.dict[server_tag].OOB_IP }}"
           IPv4Static.1.Netmask: "255.255.255.0"
-          IPv4Static.1.Gateway: "{{ ip_gateway }}"
+          IPv4Static.1.Gateway: "10.169.14.1"
+
       when: server_tag in csv_master.dict
       register: config_result
       ignore_errors: true
 
+    - name: DEBUG - Kết quả cấu hình
+      debug:
+        var: config_result
+      when: server_tag in csv_master.dict
+
     - name: 5. Hiển thị thông báo trạng thái đổi IP
       debug:
-        msg: "Server [{{ server_tag }}] -> IP Tĩnh mới: {{ csv_master.dict[server_tag].OOB_IP }}"
+        msg: >-
+          Server [{{ server_tag }}]
+          -> Hostname={{ csv_master.dict[server_tag].hostname }}
+          -> OOB_IP={{ csv_master.dict[server_tag].OOB_IP }}
+      when: server_tag in csv_master.dict
