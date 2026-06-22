@@ -18,13 +18,16 @@
         job_wait: true # Đợi cho tới khi Job tạo thành công trên iDRAC
         job_wait_timeout: 1200 # Thời gian tối đa chờ đợi (giây)
 
-        # Các thuộc tính cấu hình BIOS cụ thể
+        # Các thuộc tính cấu hình BIOS cụ thể theo tiêu chuẩn tối ưu hóa SAP/Virtualization
         attributes:
-          WorkloadProfile: "HpcProfile"
-          SysProfile: "Performance"
-          TpmSecurity: "Off"
+          SysProfile: "PerfPerWattOptimizedDapc"
+          WorkloadProfile: "VtPerWattOptimizedProfile"          
           ProcVirtualization: "Enabled"
           LogicalProc: "Enabled"
+          SubNumaCluster: "Disabled"
+          MadtCoreEnumeration: "RoundRobin"
+          LlcPrefetch: "Disabled"
+          ProcX2Apic: "Enabled"
       register: bios_config_result
 
     - name: Hiển thị trạng thái cấu hình BIOS

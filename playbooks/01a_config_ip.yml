@@ -5,8 +5,9 @@
   gather_facts: false
 
   vars:
-    # SỬA: Trỏ ra thư mục gốc của project DellDeploy một cách linh hoạt
     mapping_file: "{{ playbook_dir }}/../ip_mapping.csv"
+    ip_gateway: "10.169.15.1"
+    # ntlpublic: 10.169.15.1 , ntl4 và kddi: 10.169.14.1
 
   tasks:
     - name: 1. Thu thập thông tin Service Tag phần cứng của Server
@@ -41,7 +42,7 @@
           IPv4.1.DHCPEnable: "Disabled"
           IPv4Static.1.Address: "{{ csv_master.dict[server_tag].OOB_IP }}"
           IPv4Static.1.Netmask: "255.255.255.0"
-          IPv4Static.1.Gateway: "10.169.98.1"
+          IPv4Static.1.Gateway: "{{ ip_gateway }}"
       when: server_tag in csv_master.dict
       register: config_result
       ignore_errors: true
